@@ -5,7 +5,7 @@ from setuptools import setup
 HERE = pathlib.Path(__file__).parent
 
 # The text of the README file
-README = (HERE / "README.md").read_text()
+README = (HERE / "README.md").read_text(encoding='utf-8')
 setup(
     name="python_ntrexlab_usb2can_vcp",
     version="0.0.1",
@@ -23,7 +23,7 @@ setup(
     ],
     entry_points = {
         'can.interface': [
-            'interface_mw_usb2can_vcp = python_ntrexlab_usb2can_vcp:MW_USB2CAN_VCP'
+            'mw_usb2can_vcp = ntrexlab_usb2can_vcp:MW_USB2CAN_VCP'
         ]
     }
 )

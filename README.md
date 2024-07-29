@@ -26,6 +26,19 @@ Python 3.10 이상을 사용하여야 합니다. (match-case 사용, match-case�
 pyserial
 python-can
 
+## 설치
+```
+pip install python_ntrexlab_usb2can_vcp
+```
+
+## 사용
+```
+import can
+from python_ntrexlab_usb2can_vcp import MW_USB2CAN_VCP
+
+bus = can.Bus(interface="mw_usb2can_vcp", bitrate=1000000)
+```
+
 ## 그 밖에
 * 해외 판매는 안하는 것 같아서 한글로만 작성합니다.
 * USB2CAN 제품 중에 저렴한 제품이 적어서 모듈을 직접 작성했습니다. 마스터 용으로는 사용해도 좋지만 슬레이브로는 사용을 지양합니다.(변환 과정 및 지연 시간으로 누락이 발생됩니다.)
