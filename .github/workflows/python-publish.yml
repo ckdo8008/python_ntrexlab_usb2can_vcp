@@ -13,11 +13,6 @@ on:
     tags:
       - '*'
 
-permissions:
-  contents: read
-  packages: write
-  id-token: write
-
 jobs:
   deploy:
     name: upload release to PyPI
