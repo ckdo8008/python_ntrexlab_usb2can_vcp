@@ -1,3 +1,4 @@
 __pycache__/
 ntrexlab_usb2can_vcp.egg-info/
 python_ntrexlab_usb2can_vcp.egg-info/
+dist/
