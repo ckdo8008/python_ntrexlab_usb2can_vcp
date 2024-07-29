@@ -8,7 +8,7 @@ HERE = pathlib.Path(__file__).parent
 README = (HERE / "README.md").read_text(encoding='utf-8')
 setup(
     name="python_ntrexlab_usb2can_vcp",
-    version="0.0.2",
+    version="{{VERSION_PLACEHOLDER}}",
     author="changu",
     author_email="ckdo8008@gmail.com",
     description="이 모듈은 ntrexlab의 usb2can VCP제품을 파이썬으로 can모듈을 사용하기 위해서 작성된 인터페이스 모듈입니다.",
