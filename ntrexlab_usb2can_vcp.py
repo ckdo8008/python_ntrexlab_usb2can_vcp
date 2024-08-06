@@ -146,32 +146,38 @@ class MW_USB2CAN_VCP(BusABC):
         # Write to serial device
         try:
             self._ser.write(data)
-            time.sleep(0.02)
+            self._ser.flush()
+            # time.sleep(0.02)
         except serial.PortNotOpenError as error:
             raise CanOperationError("writing to closed port") from error
+        # except serial.SerialTimeoutException as error:
+        #     raise CanTimeoutError() from error
         except serial.SerialTimeoutException as error:
-            raise CanTimeoutError() from error
+            logger.warning("SerialTimeoutException ==")
 
     def _parse_message(self, message):
         # Remove STX ('S') and ETX ('\r\n')
-        timestamp = time.time()
-        message = message[0:-2]
+        try:
+            timestamp = time.time()
+            message = message[0:-2]
 
-        # Split arbitration_id and data
-        parts = message.split(" ", 1)
-        if len(parts) != 2:
-            raise ValueError("Invalid message format")
+            # Split arbitration_id and data
+            parts = message.split(" ", 1)
+            if len(parts) != 2:
+                raise ValueError("Invalid message format")
 
-        arbitration_id_str, data_str = parts
-        arbitration_id = int(arbitration_id_str, 16)
-        data = bytes.fromhex(data_str)
-        ret = Message(
-            arbitration_id=arbitration_id,
-            data=data,
-            timestamp=timestamp,
-        )
-        # logger.debug(ret)
-        return ret
+            arbitration_id_str, data_str = parts
+            arbitration_id = int(arbitration_id_str, 16)
+            data = bytes.fromhex(data_str)
+            ret = Message(
+                arbitration_id=arbitration_id,
+                data=data,
+                timestamp=timestamp,
+            )
+            # logger.debug(ret)
+            return ret
+        except:
+            return None
 
     def _recv_internal(
         self, timeout: Optional[float]
