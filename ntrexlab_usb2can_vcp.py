@@ -155,7 +155,7 @@ class MW_USB2CAN_VCP(BusABC):
     def _parse_message(self, message):
         # Remove STX ('S') and ETX ('\r\n')
         timestamp = time.time()
-        message = message[1:-2]
+        message = message[0:-2]
 
         # Split arbitration_id and data
         parts = message.split(" ", 1)
