@@ -32,37 +32,37 @@ class MW_USB2CAN_VCP(BusABC):
     def _baudrate2canbaud(self, baudrate: int) -> str:
         logger.debug(f"_baudrate2canbaud baudrate : {baudrate}")
         match baudrate:
-            case 10:
+            case 10000:
                 return "b=10"
-            case 20:
+            case 20000:
                 return "b=20"
-            case 25:
+            case 25000:
                 return "b=25"
-            case 40:
+            case 40000:
                 return "b=40"
-            case 50:
+            case 50000:
                 return "b=50"
-            case 80:
+            case 80000:
                 return "b=80"
-            case 100:
+            case 100000:
                 return "b=100"
-            case 125:
+            case 125000:
                 return "b=125"
-            case 150:
+            case 150000:
                 return "b=150"
-            case 200:
+            case 200000:
                 return "b=200"
-            case 250:
+            case 250000:
                 return "b=250"
-            case 400:
+            case 400000:
                 return "b=400"
-            case 500:
+            case 500000:
                 return "b=500"
-            case 750:
+            case 750000:
                 return "b=750"
-            case 800:
+            case 800000:
                 return "b=800"
-            case 1000:
+            case 1000000:
                 return "b=1000"
             case _:
                 raise TypeError("Must specify a CAN baudrate.")
@@ -70,7 +70,7 @@ class MW_USB2CAN_VCP(BusABC):
     def __init__(
         self,
         channel: str,
-        baudrate: int = 500,
+        bitrate: int = 500000,
         *args,
         **kwargs,
     ) -> None:
@@ -84,15 +84,21 @@ class MW_USB2CAN_VCP(BusABC):
             self._ser = serial.serial_for_url(
                 channel, baudrate=921600, timeout=0.1, rtscts=False
             )
+            self._ser.write(b"r\n")
+            rx_byte = self._ser.readall()
+            logger.debug(rx_byte)
+            time.sleep(0.01)  
             self._ser.write(b"\n")
             rx_byte = self._ser.readall()
-            self._ser.write(b"o=1\n")
+            self._ser.write(b"a=1\n")
+            rx_byte = self._ser.readall()
+            self._ser.write(b"o=2\n")
             rx_byte = self._ser.readall()
             # 복구 방법을 auto로 설정하였을 때, 설정 정보를 응답으로 제공하므로 해당 응답이 정상인지 여부로 초기화 여부를 판단할 수 있음
-            if b"O=1" not in rx_byte:
+            if b"O=2" not in rx_byte:
                 raise ValueError("An invalid response was received.")
             logger.debug(rx_byte)
-            canbaudrate = self._baudrate2canbaud(baudrate) + "\n"
+            canbaudrate = self._baudrate2canbaud(bitrate) + "\n"
             self._ser.write(bytearray(canbaudrate, "ascii"))
             rx_byte = self._ser.readall()
             logger.debug(rx_byte)
@@ -102,6 +108,9 @@ class MW_USB2CAN_VCP(BusABC):
             if b"T=1" not in rx_byte:
                 raise ValueError("An invalid response was received.")
             logger.debug(rx_byte)
+            self._ser.write(b"p\n")
+            rx_byte = self._ser.readall()
+            logger.debug(rx_byte)          
             self._ser.write(b"e\n")
             rx_byte = self._ser.readall()
             # can 버스가 비정상 적일 경우 초기화를 제한한다.
@@ -147,7 +156,7 @@ class MW_USB2CAN_VCP(BusABC):
         try:
             self._ser.write(data)
             self._ser.flush()
-            # time.sleep(0.02)
+            time.sleep(0.05)
         except serial.PortNotOpenError as error:
             raise CanOperationError("writing to closed port") from error
         # except serial.SerialTimeoutException as error:
@@ -155,7 +164,7 @@ class MW_USB2CAN_VCP(BusABC):
         except serial.SerialTimeoutException as error:
             logger.warning("SerialTimeoutException ==")
 
-    def _parse_message(self, message):
+    def _parse_message(self, message, stx):
         # Remove STX ('S') and ETX ('\r\n')
         try:
             timestamp = time.time()
@@ -173,10 +182,12 @@ class MW_USB2CAN_VCP(BusABC):
                 arbitration_id=arbitration_id,
                 data=data,
                 timestamp=timestamp,
+                is_extended_id=False if stx==b'S' else True
             )
             # logger.debug(ret)
             return ret
-        except:
+        except Exception as exception:
+            logger.warn(exception)
             return None
 
     def _recv_internal(
@@ -185,10 +196,10 @@ class MW_USB2CAN_VCP(BusABC):
         # logger.debug("_recv_internal")
         try:
             rx_byte = self._ser.read()
-            if rx_byte and rx_byte == b"S":
+            if rx_byte and (rx_byte == b"S" or rx_byte == b"X"):
                 message = self._ser.read_until(b"\r\n").decode("ascii")
         
-                return self._parse_message(message), False
+                return self._parse_message(message, rx_byte), False
             else:
                 return None, False
 
